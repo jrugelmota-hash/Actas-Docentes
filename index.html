@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Acta de Junta de Curso</title>
+
+<!-- jsPDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<!-- AutoTable -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+
+<style>
+body {
+    font-family: Arial;
+    padding: 20px;
+    background: #f5f5f5;
+}
+
+.container {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    max-width: 800px;
+    margin: auto;
+}
+
+h2 {
+    text-align: center;
+}
+
+label {
+    display: block;
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+input, select {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+}
+
+.group {
+    border: 1px solid #ccc;
+    padding: 15px;
+    margin-top: 20px;
+    border-radius: 8px;
+}
+
+button {
+    margin-top: 15px;
+    padding: 12px;
+    width: 100%;
+    background: #007BFF;
+    color: white;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #0056b3;
+}
+
+iframe {
+    margin-top: 20px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>Acta de Junta de Curso</h2>
+
+<label>Año Lectivo:</label>
+<select id="anio">
+    <option>2026-2027</option>
+</select>
+
+<label>Bimestre:</label>
+<select id="bimestre">
+    <option>Bimestre 1</option>
+    <option>Bimestre 2</option>
+    <option>Bimestre 3</option>
+    <option>Bimestre 4</option>
+</select>
+
+<label>Nivel Educativo:</label>
+<select id="nivel" onchange="cargarCursos()">
+    <option>Subnivel 3 años</option>
+    <option>Subnivel 4 años</option>
+    <option>Preparatoria</option>
+    <option>Básica Elemental</option>
+    <option>Básica Media</option>
+    <option>Básica Superior</option>
+    <option>Bachillerato</option>
+</select>
+
+<div class="group">
+<h3>1. Datos Informativos</h3>
+
+<label>Docente tutor:</label>
+<input type="text" id="docente">
+
+<label>Grado/Curso:</label>
+<select id="curso"></select>
+
+<label>Hora de inicio:</label>
+<input type="time" id="inicio">
+
+<label>Hora de finalización:</label>
+<input type="time" id="fin">
+
+<label>Lugar de realización:</label>
+<input type="text" id="lugar">
+
+<!-- 🔥 NUEVO -->
+<label>Lectura y aprobación del acta anterior:</label>
+<select id="aprobacion">
+    <option value="">Seleccione una opción</option>
+    <option value="Aprobado">Aprobado</option>
+    <option value="No Aprobado">No Aprobado</option>
+</select>
+
+<label>Observación (opcional):</label>
+<input type="text" id="obsAprobacion">
+
+</div>
+
+<button onclick="generarPDF()">Generar Vista Previa</button>
+
+<h3>Vista previa del documento</h3>
+<iframe id="previewPDF" width="100%" height="500px" style="border:1px solid #ccc;"></iframe>
+
+<button onclick="descargarPDF()">Descargar PDF</button>
+
+</div>
+
+<script>
+
+let pdfGenerado = null;
+
+function cargarCursos() {
+    let nivel = document.getElementById("nivel").value;
+    let cursoSelect = document.getElementById("curso");
+
+    cursoSelect.innerHTML = '<option disabled selected>Seleccione un curso</option>';
+
+    let opciones = [];
+
+    switch (nivel) {
+        case "Subnivel 3 años": opciones = ["Inicial 1 A"]; break;
+        case "Subnivel 4 años": opciones = ["Inicial 2 A", "Inicial 2 B"]; break;
+        case "Preparatoria": opciones = ["Primero A", "Primero B"]; break;
+        case "Básica Elemental":
+            opciones = ["Segundo A","Segundo B","Tercero A","Tercero B","Cuarto A","Cuarto B"];
+            break;
+        case "Básica Media":
+            opciones = ["Quinto A","Quinto B","Sexto A","Sexto B","Séptimo A","Séptimo B"];
+            break;
+        case "Básica Superior":
+            opciones = ["Octavo A","Octavo B","Octavo C","Noveno A","Noveno B","Noveno C","Décimo A","Décimo B","Décimo C"];
+            break;
+        case "Bachillerato":
+            opciones = [
+                "Primero Bach Ciencias A","Primero Bach Ciencias B","Primero Bach Informática A",
+                "Segundo Bach Ciencias A","Segundo Bach Ciencias B","Segundo Bach Informática A",
+                "Tercero Bach Ciencias A","Tercero Bach Ciencias B","Tercero Bach Informática A"
+            ];
+            break;
+    }
+
+    opciones.forEach(curso => {
+        let option = document.createElement("option");
+        option.value = curso;
+        option.text = curso;
+        cursoSelect.appendChild(option);
+    });
+}
+
+function generarPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    let anio = document.getElementById("anio").value;
+    let bimestre = document.getElementById("bimestre").value;
+    let nivel = document.getElementById("nivel").value;
+    let docente = document.getElementById("docente").value;
+    let curso = document.getElementById("curso").value;
+    let inicio = document.getElementById("inicio").value;
+    let fin = document.getElementById("fin").value;
+    let lugar = document.getElementById("lugar").value;
+    let aprobacion = document.getElementById("aprobacion").value;
+    let observacion = document.getElementById("obsAprobacion").value;
+
+    if (!docente || !curso || !inicio || !fin || !lugar) {
+        alert("Por favor completa todos los campos");
+        return;
+    }
+
+    doc.setFontSize(14);
+    doc.text("ACTA DE JUNTA DE CURSO", 105, 15, { align: "center" });
+
+    doc.setFontSize(11);
+    doc.text("Año Lectivo: " + anio, 14, 22);
+    doc.text("Bimestre: " + bimestre, 80, 22);
+    doc.text("Nivel: " + nivel, 140, 22);
+
+    doc.setFontSize(12);
+    doc.text("1. DATOS INFORMATIVOS", 14, 30);
+
+    doc.autoTable({
+        startY: 35,
+        theme: 'grid',
+        styles: { fontSize: 10, lineWidth: 0.3 },
+        body: [
+            ["DOCENTE TUTOR", docente, "HORA DE INICIO", inicio],
+            ["AÑO/CURSO/ NIVEL", curso, "HORA DE FINALIZACIÓN", fin],
+            [{content:"LUGAR DE REALIZACIÓN",colSpan:2},{content:lugar,colSpan:2}]
+        ]
+    });
+
+    let y = doc.lastAutoTable.finalY + 10;
+
+    doc.text("2. ORDEN DEL DÍA", 14, y);
+
+    doc.autoTable({
+        startY: y + 5,
+        theme: 'grid',
+        body: [
+            [{ content: "PUNTOS TRATADOS:", styles: { fontStyle: 'bold', halign: 'center' } }],
+            ["1. Asistencia."],
+            ["2. Desarrollo."],
+            ["   2.1 Lectura y aprobación del acta anterior."],
+            ["   2.2 Análisis de rendimiento académico y toma de resoluciones."],
+            ["3. Informe del DECE."],
+            ["4. Informe de inspección."],
+            ["5. Estímulos a estudiantes."],
+            ["6. Varios."]
+        ]
+    });
+
+    // ASISTENCIA
+    let y2 = doc.lastAutoTable.finalY + 10;
+
+    doc.text("3. ASISTENCIA", 14, y2);
+
+    doc.autoTable({
+        startY: y2 + 5,
+        theme: 'grid',
+        head: [["ASIGNATURA","DOCENTE","FIRMA","OBSERVACIÓN"]],
+        body: [
+            ["Lengua y Literatura","Diana Cedeño","",""],
+            ["Matemática","Joyce León","",""],
+            ["Estudios Sociales","Paola Decimavilla","",""],
+            ["Ciencias Naturales","Ximena Villanueva","",""],
+            ["Educación Cultural y Artística","Diana Cedeño","",""],
+            ["Educación Física","Carla Plúas","",""],
+            ["Inglés","Emily Araujo","",""],
+            ["Razonamiento Abstracto","Génesis Vilela","",""],
+            ["Religión","Maribel Mosquera","",""],
+            ["Computación","Nadia Calle","",""],
+            ["Razonamiento verbal","Cinthia Sánchez","",""]
+        ]
+    });
+
+    // 🔥 DESARROLLO
+    let y3 = doc.lastAutoTable.finalY + 10;
+
+    doc.text("4. DESARROLLO", 14, y3);
+
+    doc.autoTable({
+        startY: y3 + 5,
+        theme: 'grid',
+        body: [
+            ["LECTURA Y APROBACIÓN DEL ACTA ANTERIOR", aprobacion || "Sin selección"],
+            ["OBSERVACIÓN", observacion || "Ninguna"]
+        ]
+    });
+
+    pdfGenerado = doc;
+
+    const blob = doc.output("blob");
+    const url = URL.createObjectURL(blob);
+    document.getElementById("previewPDF").src = url;
+}
+
+function descargarPDF() {
+    if (!pdfGenerado) {
+        alert("Primero genera la vista previa");
+        return;
+    }
+    pdfGenerado.save("Acta_Junta_Curso.pdf");
+}
+
+window.onload = function() {
+    cargarCursos();
+};
+
+</script>
+
+</body>
+</html>
